@@ -5,9 +5,9 @@ import random
 
 
 class Dino(object):
-    def __init__(self, x,floor):
+    def __init__(self, x, floor):
         self.x = x
-        self.y = floor-50
+        self.y = floor
         self.image = pygame.transform.scale(pygame.image.load(os.path.join('Assets','dino.png')),(50,50))
         self.rect = self.image.get_rect()
         self.jump=False
@@ -26,7 +26,7 @@ class Dino(object):
 
         if self.jump and self.y>=self.floor:
             self.y = self.floor
-            self.vel_y = -20
+            self.vel_y = -13
             
         if self.y >= self.floor and not self.jump:
             self.vel_y = 0
@@ -77,6 +77,8 @@ class DinoGame(object):
             if event.type == pygame.QUIT:
                 pygame.display.quit()
                 pygame.quit()
+            if event.type == pygame.MOUSEBUTTONUP:
+                action = 1
 
         self.frame+=1
         reward = 1
@@ -101,13 +103,13 @@ class DinoGame(object):
 
         state = pygame.surfarray.array2d(self.DISPLAY)
         
-        self.clock.tick(10)
+        self.clock.tick(30)
         pygame.display.update()
+        print(len(self.cacti))
         return state, reward, endgame
 
 
     def render_all(self):
-        print('render')
         self.DISPLAY.blit(self.background_image,(0,0))
         self.dino.render(self.DISPLAY)
         for i in self.cacti:
@@ -118,7 +120,7 @@ class DinoGame(object):
         self.cacti = []
         self.background_image = pygame.transform.scale(pygame.image.load(os.path.join('Assets','background.png')),(self.DISPLAY_WIDTH,self.DISPLAY_HEIGHT))
         self.frame =0
-        self.floor = self.DISPLAY_HEIGHT*7/8
+        self.floor = self.DISPLAY_HEIGHT*5/8
         self.dino = Dino(self.DISPLAY_WIDTH/8,self.floor)
 
 
