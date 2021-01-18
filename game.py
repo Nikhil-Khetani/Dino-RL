@@ -24,11 +24,11 @@ class Dino(object):
         self.y+=self.vel_y
         self.vel_y+=1
 
-        if self.jump and self.y<=self.floor:
+        if self.jump and self.y>=self.floor:
             self.y = self.floor
             self.vel_y = -20
             
-        if self.y <= self.floor and self.jump:
+        if self.y >= self.floor and not self.jump:
             self.vel_y = 0
 
     def render(self, window):
@@ -38,7 +38,7 @@ class Cactus(object):
     def __init__(self,x,floor,size):
         if size=='small':
             self.x = x
-            self.y = floor - 80
+            self.y = floor-80
             self.image = pygame.transform.scale(pygame.image.load(os.path.join('Assets','cactus.png')),(40,80))
             self.rect = self.image.get_rect()
 
@@ -60,15 +60,24 @@ class DinoGame(object):
         self.DISPLAY_WIDTH = display_width
         self.DISPLAY_HEIGHT =  display_height
         self.DISPLAY = pygame.display.set_mode((400,300))
+        
+        self.DISPLAY.fill((100,100,100))
         pygame.display.set_caption("Dino Game")
         self.cacti = []
         self.background_image = pygame.transform.scale(pygame.image.load(os.path.join('Assets','background.png')),(self.DISPLAY_WIDTH,self.DISPLAY_HEIGHT))
         self.frame =0
-        self.floor = display_height*7/8
+        self.floor = display_height*5/8
         self.dino = Dino(self.DISPLAY_WIDTH/8,self.floor)
+        self.clock = pygame.time.Clock()
     
 
     def nextframe(self,action):
+        pygame.event.pump()
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.display.quit()
+                pygame.quit()
+
         self.frame+=1
         reward = 1
         endgame = 0
@@ -92,8 +101,10 @@ class DinoGame(object):
 
         state = pygame.surfarray.array2d(self.DISPLAY)
         
-        self.clock.tick(20)
+        self.clock.tick(10)
+        pygame.display.update()
         return state, reward, endgame
+
 
     def render_all(self):
         print('render')
@@ -112,12 +123,10 @@ class DinoGame(object):
 
 
 
-
+pygame.init()
 a= 0
 run=True
 game = DinoGame(400,300)
 while run:
     game.nextframe(a)
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            run = False
+
