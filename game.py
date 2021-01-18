@@ -3,6 +3,7 @@ import os
 import random
 
 
+
 class Dino(object):
     def __init__(self, x,floor):
         self.x = x
@@ -12,6 +13,7 @@ class Dino(object):
         self.jump=False
         self.vel_y=0
         self.floor = floor
+        self.clock = pygame.time.Clock()
 
     def step(self,action):
         if action == 1:
@@ -57,7 +59,7 @@ class DinoGame(object):
     def __init__(self,display_width, display_height):
         self.DISPLAY_WIDTH = display_width
         self.DISPLAY_HEIGHT =  display_height
-        self.DISPLAY = pygame.display.set_mode((display_width,display_height))
+        self.DISPLAY = pygame.display.set_mode((400,300))
         pygame.display.set_caption("Dino Game")
         self.cacti = []
         self.background_image = pygame.transform.scale(pygame.image.load(os.path.join('Assets','background.png')),(self.DISPLAY_WIDTH,self.DISPLAY_HEIGHT))
@@ -71,32 +73,34 @@ class DinoGame(object):
         reward = 1
         endgame = 0
         if self.frame%100 ==0:
-            self.cacti.append(Cactus(self.DISPLAY_WIDTH,'small'))
+            self.cacti.append(Cactus(self.DISPLAY_WIDTH,self.floor,'small'))
         i=0
         while i < len(self.cacti):
             if self.cacti[i].step():
                 self.cacti.pop(i)
                 i-=1
+            i+=1
         self.dino.step(action)
 
-        for i in cacti:
+        for i in self.cacti:
             if i.rect.colliderect(self.dino.rect):
                 reward = 0
                 self.reset()
                 endgame = 1
 
-        render_all()
+        self.render_all()
 
         state = pygame.surfarray.array2d(self.DISPLAY)
+        
+        self.clock.tick(20)
         return state, reward, endgame
 
     def render_all(self):
+        print('render')
         self.DISPLAY.blit(self.background_image,(0,0))
         self.dino.render(self.DISPLAY)
         for i in self.cacti:
             i.render(self.DISPLAY)
-
-
 
 
     def reset(self):
@@ -105,3 +109,15 @@ class DinoGame(object):
         self.frame =0
         self.floor = self.DISPLAY_HEIGHT*7/8
         self.dino = Dino(self.DISPLAY_WIDTH/8,self.floor)
+
+
+
+
+a= 0
+run=True
+game = DinoGame(400,300)
+while run:
+    game.nextframe(a)
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            run = False
