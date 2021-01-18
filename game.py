@@ -59,7 +59,7 @@ class DinoGame(object):
     def __init__(self,display_width, display_height):
         self.DISPLAY_WIDTH = display_width
         self.DISPLAY_HEIGHT =  display_height
-        self.DISPLAY = pygame.display.set_mode((400,300))
+        self.DISPLAY = pygame.display.set_mode((display_width,display_height))
         
         self.DISPLAY.fill((100,100,100))
         pygame.display.set_caption("Dino Game")
@@ -128,7 +128,7 @@ class DinoGame(object):
 pygame.init()
 a= 0
 run=True
-game = DinoGame(400,300)
+game = DinoGame(800,300)
 while run:
     game.nextframe(a)
 
