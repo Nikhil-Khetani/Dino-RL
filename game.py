@@ -9,13 +9,14 @@ class Dino(object):
         self.x = x
         self.y = floor
         self.image = pygame.transform.scale(pygame.image.load(os.path.join('Assets','dino.png')),(50,50))
-        self.rect = self.image.get_rect()
+        self.rect = self.image.get_rect(topleft=(self.x,self.y))
         self.jump=False
         self.vel_y=0
         self.floor = floor
         self.clock = pygame.time.Clock()
 
     def step(self,action):
+        
         if action == 1:
             self.jump =True
         else: 
@@ -26,10 +27,11 @@ class Dino(object):
 
         if self.jump and self.y>=self.floor:
             self.y = self.floor
-            self.vel_y = -13
+            self.vel_y = -16
             
         if self.y >= self.floor and not self.jump:
             self.vel_y = 0
+        self.rect = self.image.get_rect(topleft = (self.x,self.y))
 
     def render(self, window):
         window.blit(self.image,(self.x,self.y))
@@ -38,12 +40,13 @@ class Cactus(object):
     def __init__(self,x,floor,size):
         if size=='small':
             self.x = x
-            self.y = floor-80
-            self.image = pygame.transform.scale(pygame.image.load(os.path.join('Assets','cactus.png')),(40,80))
-            self.rect = self.image.get_rect()
+            self.y = floor-20
+            self.image = pygame.transform.scale(pygame.image.load(os.path.join('Assets','cactus.png')),(20,80))
+            self.rect = self.image.get_rect(topleft = (self.x,self.y))
 
     def step(self):
-        self.x-=1
+        self.x-=7
+        self.rect = self.image.get_rect(topleft = (self.x,self.y))
         if self.x<0:
             return True
         else:
@@ -84,36 +87,39 @@ class DinoGame(object):
         reward = 1
         endgame = 0
         if self.frame%100 ==0:
-            self.cacti.append(Cactus(self.DISPLAY_WIDTH,self.floor,'small'))
+            self.cacti.append(Cactus(self.DISPLAY_WIDTH-100,self.floor,'small'))
+            
         i=0
         while i < len(self.cacti):
+            print(self.cacti[i].x)
             if self.cacti[i].step():
                 self.cacti.pop(i)
                 i-=1
             i+=1
         self.dino.step(action)
 
-        for i in self.cacti:
-            if i.rect.colliderect(self.dino.rect):
-                reward = 0
-                self.reset()
-                endgame = 1
+        
 
         self.render_all()
 
         state = pygame.surfarray.array2d(self.DISPLAY)
         
         self.clock.tick(30)
-        pygame.display.update()
-        print(len(self.cacti))
+        for i in self.cacti:
+            if i.rect.colliderect(self.dino.rect):
+                print("Game Over!")
+                reward = 0
+                self.reset()
+                endgame = 1
         return state, reward, endgame
 
 
     def render_all(self):
         self.DISPLAY.blit(self.background_image,(0,0))
+        for i in range(len(self.cacti)):
+            self.cacti[i].render(self.DISPLAY)
         self.dino.render(self.DISPLAY)
-        for i in self.cacti:
-            i.render(self.DISPLAY)
+        pygame.display.update()
 
 
     def reset(self):
