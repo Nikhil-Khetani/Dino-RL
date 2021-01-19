@@ -27,7 +27,7 @@ class Dino(object):
 
         if self.jump and self.y>=self.floor:
             self.y = self.floor
-            self.vel_y = -16
+            self.vel_y = -18
             
         if self.y >= self.floor and not self.jump:
             self.vel_y = 0
@@ -45,7 +45,7 @@ class Cactus(object):
             self.rect = self.image.get_rect(topleft = (self.x,self.y))
 
     def step(self):
-        self.x-=7
+        self.x-=5
         self.rect = self.image.get_rect(topleft = (self.x,self.y))
         if self.x<0:
             return True
@@ -86,12 +86,23 @@ class DinoGame(object):
         self.frame+=1
         reward = 1
         endgame = 0
-        if self.frame%100 ==0:
-            self.cacti.append(Cactus(self.DISPLAY_WIDTH-100,self.floor,'small'))
+
+
+        if self.frame%60 ==0:
+            offset =  random.randint(0,20)
+            if random.random()>0.6:
+                self.cacti.append(Cactus(self.DISPLAY_WIDTH-100+offset,self.floor,'small'))
+            if random.random()>0.8:
+                self.cacti.append(Cactus(self.DISPLAY_WIDTH-80+offset,self.floor,'small'))
+            if random.random()>0.85:
+                self.cacti.append(Cactus(self.DISPLAY_WIDTH-60+offset,self.floor,'small'))    
+            if random.random()>0.89:
+                self.cacti.append(Cactus(self.DISPLAY_WIDTH-60+offset,self.floor,'small'))    
+
+  
             
         i=0
         while i < len(self.cacti):
-            print(self.cacti[i].x)
             if self.cacti[i].step():
                 self.cacti.pop(i)
                 i-=1
@@ -104,7 +115,7 @@ class DinoGame(object):
 
         state = pygame.surfarray.array2d(self.DISPLAY)
         
-        self.clock.tick(30)
+        self.clock.tick(60)
         for i in self.cacti:
             if i.rect.colliderect(self.dino.rect):
                 print("Game Over!")
