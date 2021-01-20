@@ -85,8 +85,9 @@ def train(episodes):
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-6)
     criterion = torch.nn.MSELoss()
     current_game = game.DinoGame(800,400)
-    state, reward, endgame = current_game.nextframe(0)
-    state = torch.from_numpy(state)
+    image, reward, endgame = current_game.nextframe(0)
+    image = torch.from_numpy(image)
+    state = torch.cat(tuple(image for _ in range(4)))[None, :, :, :]
     replay_memory = []
     episode = 0
     while episode<episodes:
@@ -97,12 +98,33 @@ def train(episodes):
             action = random.randint(0,1)
         else:
             action=torch.argmax(pred)[0]
-        next_state, reward, endgame = current_game.nextframe(action)
-        next_state = torch.from_numpy(state)
+        next_image, reward, endgame = current_game.nextframe(action)
+        next_state = torch.from_numpy(next_image)
+        next_state = torch.cat((state[0, 1:, :, :], next_image))[None, :, :, :]
         replay_memory.append([state, action, reward, next_state, endgame])
         if len(replay_memory) > replay_memory_size:
             del replay_memory[0]
         batch = random.sample(replay_memory, min(len(replay_memory), batch_size))
+        state_batch, action_batch, reward_batch, next_state_batch, terminal_batch = zip(*batch)
+        state_batch = torch.cat(tuple(state for state in state_batch))
+        action_batch = torch.from_numpy(
+            np.array([[1, 0] if action == 0 else [0, 1] for action in action_batch], dtype=np.float32))
+        reward_batch = torch.from_numpy(np.array(reward_batch, dtype=np.float32)[:, None])
+        next_state_batch = torch.cat(tuple(state for state in next_state_batch))
+        current_prediction_batch = model(state_batch)
+        next_prediction_batch = model(next_state_batch)
 
-        
+        y_batch = torch.cat(
+            tuple(reward if terminal else reward + opt.gamma * torch.max(prediction) for reward, terminal, prediction in
+                  zip(reward_batch, terminal_batch, next_prediction_batch)))
 
+        q_value = torch.sum(current_prediction_batch * action_batch, dim=1)
+        optimizer.zero_grad()
+        # y_batch = y_batch.detach()
+        loss = criterion(q_value, y_batch)
+        loss.backward()
+        optimizer.step()
+        state = next_state
+        episode +=1
+
+train(5)
