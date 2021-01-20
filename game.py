@@ -142,10 +142,5 @@ class DinoGame(object):
 
 
 
-pygame.init()
-a= 0
-run=True
-game = DinoGame(800,300)
-while run:
-    game.nextframe(a)
+
 
