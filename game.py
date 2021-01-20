@@ -113,7 +113,7 @@ class DinoGame(object):
 
         self.render_all()
 
-        state = pygame.surfarray.array2d(self.DISPLAY)[299,299]
+        state = pygame.surfarray.array2d(self.DISPLAY)[:299,:299]
         
         self.clock.tick(60)
         for i in self.cacti:
