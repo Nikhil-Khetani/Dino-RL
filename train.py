@@ -32,6 +32,10 @@ replay_memory_size=50000
 
 Transition = namedtuple('Transition',('state', 'action', 'next_state', 'reward'))
 
+def pre_processing(image, width, height):
+    image = cv2.cvtColor(cv2.resize(image, (width, height)), cv2.COLOR_BGR2GRAY)
+    _, image = cv2.threshold(image, 1, 255, cv2.THRESH_BINARY)
+    return image[None, :, :].astype(np.float32)
 
 class ReplayMemory(object):
 
@@ -82,17 +86,46 @@ class DQN(nn.Module):
         return self.head(x.view(x.size(0), -1))
 
 
+class DeepQNetwork(nn.Module):
+    def __init__(self):
+        super(DeepQNetwork, self).__init__()
+
+        self.conv1 = nn.Sequential(nn.Conv2d(4, 32, kernel_size=8, stride=4), nn.ReLU(inplace=True))
+        self.conv2 = nn.Sequential(nn.Conv2d(32, 64, kernel_size=4, stride=2), nn.ReLU(inplace=True))
+        self.conv3 = nn.Sequential(nn.Conv2d(64, 64, kernel_size=3, stride=1), nn.ReLU(inplace=True))
+
+        self.fc1 = nn.Sequential(nn.Linear(7 * 7 * 64, 512), nn.ReLU(inplace=True))
+        self.fc2 = nn.Linear(512, 2)
+        self._create_weights()
+
+    def _create_weights(self):
+        for m in self.modules():
+            if isinstance(m, nn.Conv2d) or isinstance(m, nn.Linear):
+                nn.init.uniform(m.weight, -0.01, 0.01)
+                nn.init.constant_(m.bias, 0)
+
+    def forward(self, input):
+        output = self.conv1(input)
+        output = self.conv2(output)
+        output = self.conv3(output)
+        output = output.view(output.size(0), -1)
+        output = self.fc1(output)
+        output = self.fc2(output)
+
+        return output
+
 def train(episodes):
-    model = DQN(STATE_HEIGHT,STATE_WIDTH,2)
+    model = DeepQNetwork()
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-6)
     criterion = torch.nn.MSELoss()
     current_game = game.DinoGame(400,400)
     image, reward, endgame = current_game.nextframe(0)
-    #image = torch.from_numpy(cv2.cvtColor(image,cv2.COLOR_BGR2GRAY))
-    image = torch.from_numpy(np.expand_dims(np.transpose(image,(2,0,1)),0))
     
-    image=image.float()
-    state=torch.cat(tuple(image for _ in range (4)))
+    image = pre_processing(image, 84,84)
+    #image = torch.from_numpy(np.expand_dims(np.transpose(image,(2,0,1)),0))
+    image = torch.from_numpy(image)
+    #image=image.float()
+    state=torch.cat(tuple(image for _ in range (4)))[None, :, :, :]
     #print(state.shape)
     replay_memory = []
     episode = 0
@@ -102,17 +135,22 @@ def train(episodes):
         epsilon = final_epsilon+((episodes-episode)*(initial_epsilon-final_epsilon)/episodes)
         take_random_action = random.random()<=epsilon
         if take_random_action:
+            print('random')
             action = random.randint(0,1)
         else:
             action=torch.argmax(pred)
+
         next_image, reward, endgame = current_game.nextframe(action)
-        next_image = torch.from_numpy(np.expand_dims(np.transpose(next_image,(2,0,1)),0))
-        next_image = next_image.float()
-        print(next_image.shape)
-        print(state.shape)
-        next_state = torch.cat((state, next_image))
+        #next_image = torch.from_numpy(np.expand_dims(np.transpose(next_image,(2,0,1)),0))
+        #next_image = next_image.float()
+        #next_state = torch.cat((state.squeeze(0)[3:,:,:], next_image))
 
+        next_image = pre_processing(next_image, 84,84)
 
+        #action = action.unsqueeze(0)
+        #reward = torch.from_numpy(np.array([reward],dtype=np.float32)).unsqueeze(0)
+        next_image = torch.from_numpy(next_image)
+        next_state = torch.cat((state[0, 1:, :, :], next_image))[None, :, :, :]
 
         replay_memory.append([state, action, reward, next_state, endgame])
         if len(replay_memory) > replay_memory_size:
@@ -130,14 +168,14 @@ def train(episodes):
         y_batch = torch.cat(
             tuple(reward if terminal else reward + gamma * torch.max(prediction) for reward, terminal, prediction in
                   zip(reward_batch, terminal_batch, next_prediction_batch)))
-
+        print(current_prediction_batch)
+        print(action_batch)
         q_value = torch.sum(current_prediction_batch * action_batch, dim=1)
         optimizer.zero_grad()
-        # y_batch = y_batch.detach()
         loss = criterion(q_value, y_batch)
         loss.backward()
         optimizer.step()
         state = next_state
         episode +=1
 
-train(5)
+train(1000000)
