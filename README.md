@@ -1,2 +1,2 @@
 # Dino-RL
-A copy of Google Chrome's Dinosaur game for the purposes of training a reinforcement learning agent to play it
+A copy of Google Chrome's Dinosaur game with a reinforcement learning algorithm to play it.
