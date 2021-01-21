@@ -59,11 +59,10 @@ class Cactus(object):
 
 class DinoGame(object):
 
-    def __init__(self,display_width, display_height):
+    def __init__(self,FPS, display_width, display_height):
         self.DISPLAY_WIDTH = display_width
         self.DISPLAY_HEIGHT =  display_height
         self.DISPLAY = pygame.display.set_mode((display_width,display_height))
-        
         self.DISPLAY.fill((100,100,100))
         pygame.display.set_caption("Dino Game")
         self.cacti = []
@@ -72,6 +71,7 @@ class DinoGame(object):
         self.floor = display_height*5/8
         self.dino = Dino(self.DISPLAY_WIDTH/8,self.floor)
         self.clock = pygame.time.Clock()
+        self.FPS = FPS
     
 
     def nextframe(self,action):
@@ -90,7 +90,7 @@ class DinoGame(object):
 
         if self.frame%60 ==0:
             offset =  random.randint(0,20)
-            if random.random()>0.6:
+            if random.random()>0.4:
                 self.cacti.append(Cactus(self.DISPLAY_WIDTH+100+offset,self.floor,'small'))
             if random.random()>0.8:
                 self.cacti.append(Cactus(self.DISPLAY_WIDTH+80+offset,self.floor,'small'))
@@ -115,7 +115,9 @@ class DinoGame(object):
 
         state = pygame.surfarray.array3d(self.DISPLAY)[:400,:400,:]
         
-        self.clock.tick(60)
+        if self.FPS !=None:
+            self.clock.tick(self.FPS)
+
         for i in self.cacti:
             if i.rect.colliderect(self.dino.rect):
                 print("Game Over!")

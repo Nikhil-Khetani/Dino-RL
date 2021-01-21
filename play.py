@@ -2,7 +2,7 @@ import pygame
 import game
 pygame.init()
 
-my_game = game.DinoGame(400,400)
+my_game = game.DinoGame(60,400,400)
 run=True
 while run:
     a=0

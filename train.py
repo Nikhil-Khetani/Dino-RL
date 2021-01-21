@@ -168,8 +168,6 @@ def train(episodes):
         y_batch = torch.cat(
             tuple(reward if terminal else reward + gamma * torch.max(prediction) for reward, terminal, prediction in
                   zip(reward_batch, terminal_batch, next_prediction_batch)))
-        print(current_prediction_batch)
-        print(action_batch)
         q_value = torch.sum(current_prediction_batch * action_batch, dim=1)
         optimizer.zero_grad()
         loss = criterion(q_value, y_batch)
