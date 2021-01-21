@@ -76,15 +76,19 @@ class DinoGame(object):
 
     def nextframe(self,action):
         pygame.event.pump()
+        if action == 0:
+            reward = 0.3
+        else:
+            reward = 0.2
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.display.quit()
                 pygame.quit()
             if event.type == pygame.MOUSEBUTTONUP:
                 action = 1
-
+        
+        
         self.frame+=1
-        reward = 1
         endgame = 0
 
 
@@ -104,6 +108,7 @@ class DinoGame(object):
         i=0
         while i < len(self.cacti):
             if self.cacti[i].step():
+                reward=1
                 self.cacti.pop(i)
                 i-=1
             i+=1

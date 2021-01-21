@@ -11,6 +11,7 @@ import torch.optim as optim
 import torch.nn.functional as F
 import torchvision.transforms as T
 import cv2
+import time
 
 
 DISPLAY_HEIGHT=400
@@ -28,6 +29,7 @@ initial_epsilon=0.1
 final_epsilon=1e-4
 num_iters=2000000
 replay_memory_size=50000
+
 
 
 Transition = namedtuple('Transition',('state', 'action', 'next_state', 'reward'))
@@ -67,6 +69,7 @@ class DQN(nn.Module):
         self.bn2 = nn.BatchNorm2d(32)
         self.conv3 = nn.Conv2d(32, 32, kernel_size=5, stride=2)
         self.bn3 = nn.BatchNorm2d(32)
+        
 
         # Number of Linear input connections depends on output of conv2d layers
         # and therefore the input image size, so compute it.
@@ -115,10 +118,12 @@ class DeepQNetwork(nn.Module):
         return output
 
 def train(episodes):
+    real_time_start = time.time()
+    CPU_time_start = time.process_time()
     model = DeepQNetwork()
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-6)
     criterion = torch.nn.MSELoss()
-    current_game = game.DinoGame(400,400)
+    current_game = game.DinoGame(None,400,400)
     image, reward, endgame = current_game.nextframe(0)
     
     image = pre_processing(image, 84,84)
@@ -129,9 +134,9 @@ def train(episodes):
     #print(state.shape)
     replay_memory = []
     episode = 0
+    
     while episode<episodes:
         pred = model(state)[0]
-        print(pred)
         epsilon = final_epsilon+((episodes-episode)*(initial_epsilon-final_epsilon)/episodes)
         take_random_action = random.random()<=epsilon
         if take_random_action:
@@ -174,6 +179,25 @@ def train(episodes):
         loss.backward()
         optimizer.step()
         state = next_state
-        episode +=1
+        
+        if episode %10 == 0:
+            print("Episode: {}/{}, Action: {}, Loss: {}, Epsilon {}, Reward: {}, Q-value: {}".format(
+            episode + 1, episodes, action, loss, epsilon, reward, torch.max(pred)))
+        episode+=1
+
+        if episode % 1000 == 0:
+            real_time_elapsed = time.time()-real_time_start
+            CPU_time_elapsed =time.process_time()-CPU_time_start
+            print("Real time elapsed : {}, CPU time elapsed : {}".format(real_time_elapsed,CPU_time_elapsed))
+            checkpoint_path = "checkpoint_{}.pt".format(episode)
+            torch.save({
+            'checkpoint_episode': episode,
+            'model_state_dict': model.state_dict(),
+            'optimizer_state_dict': optimizer.state_dict(),
+            'loss':loss,
+            'real_time_elapsed' : real_time_elapsed,
+            'CPU_time_elapsed' : CPU_time_elapsed
+            }, checkpoint_path)
+
 
 train(1000000)
