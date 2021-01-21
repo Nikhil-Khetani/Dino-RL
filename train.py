@@ -14,7 +14,7 @@ import cv2
 
 
 DISPLAY_HEIGHT=400
-DISPLAY_WIDTH=800
+DISPLAY_WIDTH=400
 STATE_HEIGHT = DISPLAY_HEIGHT-1
 STATE_WIDTH = DISPLAY_WIDTH-1
 
@@ -81,28 +81,39 @@ class DQN(nn.Module):
         x = F.relu(self.bn3(self.conv3(x)))
         return self.head(x.view(x.size(0), -1))
 
+
 def train(episodes):
     model = DQN(STATE_HEIGHT,STATE_WIDTH,2)
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-6)
     criterion = torch.nn.MSELoss()
-    current_game = game.DinoGame(800,400)
+    current_game = game.DinoGame(400,400)
     image, reward, endgame = current_game.nextframe(0)
-    print(image.shape[0])
-    image = torch.from_numpy(cv2.cvtColor(image,cv2.COLOR_BGR2GRAY))
-    state = torch.cat(tuple(image for _ in range(4))).unsqueeze(0)
+    #image = torch.from_numpy(cv2.cvtColor(image,cv2.COLOR_BGR2GRAY))
+    image = torch.from_numpy(np.expand_dims(np.transpose(image,(2,0,1)),0))
+    
+    image=image.float()
+    state=torch.cat(tuple(image for _ in range (4)))
+    #print(state.shape)
     replay_memory = []
     episode = 0
     while episode<episodes:
         pred = model(state)[0]
+        print(pred)
         epsilon = final_epsilon+((episodes-episode)*(initial_epsilon-final_epsilon)/episodes)
         take_random_action = random.random()<=epsilon
         if take_random_action:
             action = random.randint(0,1)
         else:
-            action=torch.argmax(pred)[0]
+            action=torch.argmax(pred)
         next_image, reward, endgame = current_game.nextframe(action)
-        next_state = torch.from_numpy(next_image)
-        next_state = torch.cat((state[0, 1:, :, :], next_image))[None, :, :, :]
+        next_image = torch.from_numpy(np.expand_dims(np.transpose(next_image,(2,0,1)),0))
+        next_image = next_image.float()
+        print(next_image.shape)
+        print(state.shape)
+        next_state = torch.cat((state, next_image))
+
+
+
         replay_memory.append([state, action, reward, next_state, endgame])
         if len(replay_memory) > replay_memory_size:
             del replay_memory[0]

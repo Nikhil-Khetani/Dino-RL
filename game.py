@@ -91,13 +91,13 @@ class DinoGame(object):
         if self.frame%60 ==0:
             offset =  random.randint(0,20)
             if random.random()>0.6:
-                self.cacti.append(Cactus(self.DISPLAY_WIDTH-100+offset,self.floor,'small'))
+                self.cacti.append(Cactus(self.DISPLAY_WIDTH+100+offset,self.floor,'small'))
             if random.random()>0.8:
-                self.cacti.append(Cactus(self.DISPLAY_WIDTH-80+offset,self.floor,'small'))
+                self.cacti.append(Cactus(self.DISPLAY_WIDTH+80+offset,self.floor,'small'))
             if random.random()>0.85:
-                self.cacti.append(Cactus(self.DISPLAY_WIDTH-60+offset,self.floor,'small'))    
+                self.cacti.append(Cactus(self.DISPLAY_WIDTH+60+offset,self.floor,'small'))    
             if random.random()>0.89:
-                self.cacti.append(Cactus(self.DISPLAY_WIDTH-60+offset,self.floor,'small'))    
+                self.cacti.append(Cactus(self.DISPLAY_WIDTH+60+offset,self.floor,'small'))    
 
   
             
@@ -113,7 +113,7 @@ class DinoGame(object):
 
         self.render_all()
 
-        state = pygame.surfarray.array2d(self.DISPLAY)[:299,:299]
+        state = pygame.surfarray.array3d(self.DISPLAY)[:400,:400,:]
         
         self.clock.tick(60)
         for i in self.cacti:
