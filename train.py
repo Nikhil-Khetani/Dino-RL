@@ -129,6 +129,9 @@ def train(episodes):
     image = pre_processing(image, 84,84)
     #image = torch.from_numpy(np.expand_dims(np.transpose(image,(2,0,1)),0))
     image = torch.from_numpy(image)
+    if torch.cuda.is_available():
+        model.cuda()
+        image = image.cuda()
     #image=image.float()
     state=torch.cat(tuple(image for _ in range (4)))[None, :, :, :]
     #print(state.shape)
@@ -155,6 +158,8 @@ def train(episodes):
         #action = action.unsqueeze(0)
         #reward = torch.from_numpy(np.array([reward],dtype=np.float32)).unsqueeze(0)
         next_image = torch.from_numpy(next_image)
+        if torch.cuda.is_available():
+            next_image = next_image.cuda()
         next_state = torch.cat((state[0, 1:, :, :], next_image))[None, :, :, :]
 
         replay_memory.append([state, action, reward, next_state, endgame])
@@ -167,6 +172,12 @@ def train(episodes):
             np.array([[1, 0] if action == 0 else [0, 1] for action in action_batch], dtype=np.float32))
         reward_batch = torch.from_numpy(np.array(reward_batch, dtype=np.float32)[:, None])
         next_state_batch = torch.cat(tuple(state for state in next_state_batch))
+        if torch.cuda.is_available():
+            state_batch = state_batch.cuda()
+            action_batch = action_batch.cuda()
+            reward_batch = reward_batch.cuda()
+            next_state_batch = next_state_batch.cuda()
+        
         current_prediction_batch = model(state_batch)
         next_prediction_batch = model(next_state_batch)
 
