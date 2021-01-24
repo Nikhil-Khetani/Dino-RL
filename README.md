@@ -11,7 +11,7 @@ This project uses PyGame for the game itself (www.pygame.org)
 ```
 pip install pygame
 ```
-PyTorch is used as the main framework for reinforcement learning
+PyTorch is used as the main framework for reinforcement learning (pytorch.org)
 ```
 pip install torch
 ```
